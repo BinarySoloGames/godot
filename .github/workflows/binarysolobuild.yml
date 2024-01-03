@@ -1,0 +1,37 @@
+name: Build Godot (All Platforms) 
+on: push
+
+jobs:
+  build:
+    name: Build Godot 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [linuxbsd, macos, windows] # TODO: Add android & iOS
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Ubuntu Dependencies
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo apt update
+          sudo apt install -y mesa-common-dev xorg-dev libgl-dev libopenal-dev
+          sudo apt-get install build-essential scons pkg-config libx11-dev libxcursor-dev \
+                              libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev \
+                              libudev-dev libxi-dev libxrandr-dev
+      - name: Install Mac Dependencies
+        if: contains(matrix.os, 'mac')
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+          brew update
+          brew install scons
+      - name: Install Windows Dependencies
+        if: contains(matrix.os, 'windows')
+        run: |
+          scoop install gcc python scons make mingw
+      - name: Build
+        run: scons platform=${{ matrix.os }}
+
